@@ -1,28 +1,42 @@
 [project]
 name = 'finmarketpy'
-version = "0.0.0"      # do not change by hand!
+version = "0.11.19"
 description = "finmarketpy is a Python based library for backtesting trading strategies"
-# Please add authors and correct the email...
 authors = [{name='Saeed Amen', email= 'saeed@cuemacro.com'}]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = "==3.13.*"
+license = {text = "Apache-2.0"}
 dependencies = [
-    "blosc",
-    "chartpy",
-    "findatapy",
-    "matplotlib",
-    "numba",
-    "numpy<2",
-    "pandas>=1.5.3",
-    "scikit-learn",
-    "seasonal",
+    "blosc>=1.11.3",
+    "chartpy>=0.1.16",
+    "findatapy>=0.1.40",
+    "matplotlib>=3.10.7",
+    "multiprocess>=0.70.18",
+    "numba>=0.62.1",
+    "numpy>=2.3.4",
+    "pandas>=2.3.3",
+    "pytz>=2025.2",
+    "requests>=2.32.5",
+    "scikit-learn>=1.7.2",
+    "seasonal>=0.3.1",
+    "twython>=3.9.1",
 ]
 keywords = [
     "trading", "markets", "currencies", "pandas", "data", "Bloomberg", "tick", "stocks", "equities"
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
 
 [project.urls]
 repository = "https://github.com/cuemacro/finmarketpy"
+Homepage = "https://github.com/cuemacro/finmarketpy"
 
 [dependency-groups]
 dev = [
@@ -35,7 +49,7 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py39"
+target-version = "py313"
 exclude = [
     "*__init__.py"
 ]
