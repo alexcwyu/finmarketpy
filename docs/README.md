@@ -1,5 +1,8 @@
 # finmarketpy Documentation
 
+> **Last Updated**: 2026-04-06T16:25:30Z  \
+> **Git Hash**: `a7176d7`
+
 finmarketpy is a Python library for backtesting trading strategies and analyzing financial market data, developed by [Cuemacro](https://www.cuemacro.com). It provides prebuilt templates for strategy backtesting, seasonality analysis, event studies, FX pricing, and risk management with volatility targeting.
 
 - **Version**: 0.11.19
