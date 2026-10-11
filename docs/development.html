@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Current uv development workflow</title><style>
+:root{color-scheme:light dark;--bg:#f6f8fa;--paper:#fff;--fg:#182332;--muted:#526274;--line:#d9e0e7;--accent:#1769aa}
+@media(prefers-color-scheme:dark){:root{--bg:#111820;--paper:#192330;--fg:#e6edf3;--muted:#a0b3c5;--line:#344354;--accent:#71b7ee}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,sans-serif}
+header{border-bottom:1px solid var(--line);padding:16px max(24px,calc((100vw - 1120px)/2));background:var(--paper);font-size:14px}
+main{max-width:1120px;margin:32px auto;padding:40px 48px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+h1,h2,h3,h4{line-height:1.3;scroll-margin-top:24px}h1{font-size:2.1rem}h2{margin-top:2.5em;border-bottom:1px solid var(--line);padding-bottom:.35em}h3{margin-top:1.8em}
+a{color:var(--accent);text-underline-offset:3px}code{font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border-radius:4px;padding:2px 5px}pre{overflow:auto;border:1px solid var(--line);background:var(--bg);padding:16px;border-radius:7px}pre code{padding:0;background:none}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto;font-size:14px}th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg)}blockquote{border-left:4px solid var(--accent);margin:16px 0;padding:4px 20px;color:var(--muted)}
+.diagram{overflow-x:auto;margin:24px 0;padding:20px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#182332}.mermaid{border:0;background:none;text-align:center}.mermaid svg{height:auto;max-width:100%}details{font-size:13px;color:#526274}.headerlink{margin-left:.4em;font-size:.7em;text-decoration:none;color:var(--muted)}
+@media(max-width:740px){main{margin:0;padding:24px 18px;border:0;border-radius:0}h1{font-size:1.7rem}.diagram{padding:8px}}
+@media print{header,details,.headerlink{display:none}body,main{background:#fff;color:#000;border:0;margin:0;padding:0}a{color:#000}.diagram,pre{break-inside:avoid}}
+</style></head><body><header>Engineering documentation · <a href="development.md">Markdown source</a></header><main><!-- ayu-maintenance-2026-10-12 -->
+<h1 id="current-uv-development-workflow">Current uv development workflow<a class="headerlink" href="#current-uv-development-workflow" title="Permanent link">&para;</a></h1>
+<p>The maintained branch is <code>feature/ayu_develop</code>. The selected interpreter is Python <code>3.14</code>; <code>requires-python</code> records the range that was actually resolved. Python 3.15 was attempted first. Dependency/native-wheel failures and fallback evidence are recorded in <a href="validation.md">validation.md</a>.</p>
+<pre><code class="language-sh">export UV_PYTHON_PREFERENCE=only-managed
+uv python install 3.14
+uv lock --check
+uv sync --frozen --all-extras --all-groups
+uv run --no-sync python -m compileall -q src
+uv build
+uv run --no-sync python -m pytest
+</code></pre>
+<p>Use <code>uv lock --upgrade</code> when intentionally refreshing dependencies, then review <code>pyproject.toml</code>, <code>uv.lock</code>, and the existing full test suite. The dependency floors were refreshed from current PyPI release metadata while preserving meaningful upstream upper bounds. Compatibility exceptions are documented with their resolver/test evidence rather than hidden by disabling tests.</p>
+<p>The <code>src/</code> layout and build-backend package discovery preserve public import names. Wheel/sdist resources include the source-associated data and templates. Optional vendor SDKs, live credentials, databases and graphical/native libraries retain their original runtime requirements. Examples and test fixtures are not promoted into the library API.</p>
+<!-- prior-development-notes -->
+
+<h2 id="compatibility-decisions">Compatibility decisions<a class="headerlink" href="#compatibility-decisions" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The complete supplied tests pass with current scientific dependencies.</li>
+<li>findatapy 0.1.42 and chartpy 0.1.16 still use deprecated UTC constructors upstream. Verified licensed local sources preserve naive-UTC results and have documented hashes, refresh/retirement instructions and original licenses.</li>
+<li>Chartpy imports Plotly private OHLC machinery removed in Plotly6; Plotly&gt;=5.24.1,&lt;6 is the proven compatible range.</li>
+<li>
+<p>The source archive includes vendor sources; uv sources select them. Ordinary wheel installers do not interpret tool.uv.sources, so use the documented uv checkout/sdist workflow to reproduce these patches.</p>
+</li>
+<li>
+<p><a href="../vendor/chartpy/PROVENANCE.md">Verified dependency source and license: chartpy</a></p>
+</li>
+<li><a href="../vendor/findatapy/PROVENANCE.md">Verified dependency source and license: findatapy</a></li>
+</ul>
+<h1 id="development-guide">Development Guide<a class="headerlink" href="#development-guide" title="Permanent link">&para;</a></h1>
+<p>This document covers development standards, design patterns, best practices, and extension points for finmarketpy.</p>
+<h2 id="build-and-test">Build and Test<a class="headerlink" href="#build-and-test" title="Permanent link">&para;</a></h2>
+<h3 id="environment-setup">Environment Setup<a class="headerlink" href="#environment-setup" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">cd finmarketpy
+make install          # Creates venv with uv, installs dependencies
+</code></pre>
+<h3 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">make test             # All tests via pytest
+uv run pytest tests/test_backtestengine.py      # Specific file
+uv run pytest tests/test_techindicator.py -v    # Verbose output
+uv run pytest --cov=finmarketpy tests           # With coverage
+</code></pre>
+<h3 id="code-quality">Code Quality<a class="headerlink" href="#code-quality" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">make fmt              # Pre-commit hooks: ruff linting/formatting
+make deptry           # Dependency analysis
+</code></pre>
+<h3 id="key-test-files">Key Test Files<a class="headerlink" href="#key-test-files" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/test_backtestengine.py</code></td>
+<td>Backtest execution, P&amp;L calculation, signal handling</td>
+</tr>
+<tr>
+<td><code>tests/test_techindicator.py</code></td>
+<td>Technical indicator computation and signal generation</td>
+</tr>
+<tr>
+<td><code>tests/conftest.py</code></td>
+<td>Shared pytest fixtures</td>
+</tr>
+</tbody>
+</table>
+<h2 id="design-patterns">Design Patterns<a class="headerlink" href="#design-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="1-template-method-pattern-tradingmodel">1. Template Method Pattern (TradingModel)<a class="headerlink" href="#1-template-method-pattern-tradingmodel" title="Permanent link">&para;</a></h3>
+<p><code>TradingModel</code> is the core extensibility point. It implements the Template Method pattern: the base class defines the algorithm skeleton in <code>construct_strategy()</code>, while subclasses provide specific implementations.</p>
+<div class="diagram"><pre class="mermaid">graph TB
+    subgraph &quot;TradingModel (Abstract Base)&quot;
+        CS[construct_strategy&lt;br/&gt;Template Method]
+        CIS[construct_individual_strategy]
+        CSVB[compare_strategy_vs_benchmark]
+        PLOT[plot_strategy_pnl, etc.]
+    end
+
+    subgraph &quot;User Must Implement&quot;
+        LP[load_parameters&lt;br/&gt;Returns BacktestRequest]
+        LA[load_assets&lt;br/&gt;Returns market data tuple]
+        CSG[construct_signal&lt;br/&gt;Returns signal DataFrame]
+    end
+
+    subgraph &quot;User May Override&quot;
+        CSB[construct_strategy_benchmark]
+    end
+
+    CS --&gt; LP
+    CS --&gt; LA
+    CS --&gt; CSG
+    CS --&gt; CIS
+    CS --&gt; CSVB</pre><details><summary>Diagram source</summary><pre><code>graph TB
+    subgraph &quot;TradingModel (Abstract Base)&quot;
+        CS[construct_strategy&lt;br/&gt;Template Method]
+        CIS[construct_individual_strategy]
+        CSVB[compare_strategy_vs_benchmark]
+        PLOT[plot_strategy_pnl, etc.]
+    end
+
+    subgraph &quot;User Must Implement&quot;
+        LP[load_parameters&lt;br/&gt;Returns BacktestRequest]
+        LA[load_assets&lt;br/&gt;Returns market data tuple]
+        CSG[construct_signal&lt;br/&gt;Returns signal DataFrame]
+    end
+
+    subgraph &quot;User May Override&quot;
+        CSB[construct_strategy_benchmark]
+    end
+
+    CS --&gt; LP
+    CS --&gt; LA
+    CS --&gt; CSG
+    CS --&gt; CIS
+    CS --&gt; CSVB</code></pre></details></div>
+
+<p><strong>Source</strong>: <code>src/finmarketpy/backtest/backtestengine.py</code> (lines 954-1020)</p>
+<h3 id="2-strategy-pattern-portfolioweightconstruction">2. Strategy Pattern (PortfolioWeightConstruction)<a class="headerlink" href="#2-strategy-pattern-portfolioweightconstruction" title="Permanent link">&para;</a></h3>
+<p><code>BacktestRequest.portfolio_weight_construction</code> can be set to a custom <code>PortfolioWeightConstruction</code> instance. If not provided, a default one is created. This allows plugging in custom weighting schemes without modifying the engine.</p>
+<pre><code class="language-python"># In Backtest.calculate_trading_PnL():
+if br.portfolio_weight_construction is None:
+    pwc = PortfolioWeightConstruction(br=br)
+else:
+    pwc = br.portfolio_weight_construction
+</code></pre>
+<p><strong>Source</strong>: <code>src/finmarketpy/backtest/backtestengine.py</code> (lines 247-250)</p>
+<h3 id="3-configuration-override-pattern">3. Configuration Override Pattern<a class="headerlink" href="#3-configuration-override-pattern" title="Permanent link">&para;</a></h3>
+<p>Three-level configuration resolution (class defaults, MarketCred, runtime overrides) allows settings to be customized without modifying source code. See <a href="state-management.md">State Management</a> for details.</p>
+<h3 id="4-abstract-curve-pattern">4. Abstract Curve Pattern<a class="headerlink" href="#4-abstract-curve-pattern" title="Permanent link">&para;</a></h3>
+<p><code>AbstractCurve</code> defines the interface for total return index construction. Each asset class (spot, forwards, options) implements the same three methods. This makes it straightforward to add support for new asset classes.</p>
+<div class="diagram"><pre class="mermaid">graph LR
+    AC[AbstractCurve&lt;br/&gt;generate_key&lt;br/&gt;fetch_continuous_time_series&lt;br/&gt;construct_total_returns_index] --&gt; FXS[FXSpotCurve]
+    AC --&gt; FXF[FXForwardsCurve]
+    AC --&gt; FXO[FXOptionsCurve]
+    AC --&gt; NEW[Your New Curve Class]</pre><details><summary>Diagram source</summary><pre><code>graph LR
+    AC[AbstractCurve&lt;br/&gt;generate_key&lt;br/&gt;fetch_continuous_time_series&lt;br/&gt;construct_total_returns_index] --&gt; FXS[FXSpotCurve]
+    AC --&gt; FXF[FXForwardsCurve]
+    AC --&gt; FXO[FXOptionsCurve]
+    AC --&gt; NEW[Your New Curve Class]</code></pre></details></div>
+
+<p><strong>Source</strong>: <code>src/finmarketpy/curve/abstractcurve.py</code></p>
+<h3 id="5-lazy-evaluation">5. Lazy Evaluation<a class="headerlink" href="#5-lazy-evaluation" title="Permanent link">&para;</a></h3>
+<p>Expensive computations on <code>Backtest</code> results (trade counts, individual trade P&amp;L) are deferred until first access:</p>
+<pre><code class="language-python">def trade_no(self) -&gt; pd.DataFrame:
+    if self._trade_no is None:
+        calculations = Calculations()
+        self._trade_no = calculations.calculate_trade_no(self._signal)
+    return self._trade_no
+</code></pre>
+<h2 id="extending-finmarketpy">Extending finmarketpy<a class="headerlink" href="#extending-finmarketpy" title="Permanent link">&para;</a></h2>
+<h3 id="creating-a-custom-trading-strategy">Creating a Custom Trading Strategy<a class="headerlink" href="#creating-a-custom-trading-strategy" title="Permanent link">&para;</a></h3>
+<p>The most common extension is creating a new strategy by subclassing <code>TradingModel</code>.</p>
+<pre><code class="language-python">from finmarketpy.backtest import Backtest, BacktestRequest, TradingModel
+from finmarketpy.economics import TechIndicator, TechParams
+from findatapy.market import Market, MarketDataRequest, MarketDataGenerator
+
+class FXMomentumStrategy(TradingModel):
+    &quot;&quot;&quot;FX momentum strategy using rate of change signals.&quot;&quot;&quot;
+
+    FINAL_STRATEGY = 'FX Momentum'
+
+    def load_parameters(self, br=None):
+        if br is None:
+            br = BacktestRequest()
+
+        br.start_date = '2005-01-01'
+        br.finish_date = '2023-12-31'
+        br.spot_tc_bp = 2.5
+        br.ann_factor = 252
+
+        # Signal-level vol targeting
+        br.signal_vol_adjust = True
+        br.signal_vol_target = 0.10
+        br.signal_vol_periods = 60
+
+        # Portfolio-level vol targeting
+        br.portfolio_vol_adjust = True
+        br.portfolio_vol_target = 0.10
+        br.portfolio_vol_periods = 20
+
+        # Position limits
+        br.max_net_exposure = 3.0
+        br.max_abs_exposure = 5.0
+
+        # Technical parameters
+        br.tech_params.roc_period = 60
+        br.trading_field = 'close'
+
+        return br
+
+    def load_assets(self, br=None):
+        if br is None:
+            br = self.br
+
+        # Define tickers and fetch data
+        md_request = MarketDataRequest(
+            start_date=br.start_date,
+            finish_date=br.finish_date,
+            data_source='your_data_source',
+            tickers=['EURUSD', 'GBPUSD', 'USDJPY'],
+            fields=['close'],
+            freq='daily'
+        )
+
+        market = Market(market_data_generator=MarketDataGenerator())
+        asset_df = market.fetch_market(md_request)
+        spot_df = asset_df.copy()
+
+        basket_dict = {
+            'EURUSD': ['EURUSD'],
+            'GBPUSD': ['GBPUSD'],
+            'USDJPY': ['USDJPY'],
+            self.FINAL_STRATEGY: ['EURUSD', 'GBPUSD', 'USDJPY']
+        }
+
+        return asset_df, spot_df, None, basket_dict
+
+    def construct_signal(self, spot_df=None, spot_df2=None,
+                         tech_params=None, br=None, run_in_parallel=False):
+        if tech_params is None:
+            tech_params = self.br.tech_params
+
+        tech = TechIndicator()
+        tech.create_tech_ind(spot_df, 'ROC', tech_params)
+        return tech.get_signal()
+
+
+# Run the strategy
+model = FXMomentumStrategy()
+model.construct_strategy()
+model.plot_strategy_pnl()
+</code></pre>
+<h3 id="adding-a-custom-technical-indicator">Adding a Custom Technical Indicator<a class="headerlink" href="#adding-a-custom-technical-indicator" title="Permanent link">&para;</a></h3>
+<p>Extend <code>TechIndicator</code> by adding a new branch in <code>create_tech_ind()</code> or by subclassing:</p>
+<pre><code class="language-python">from finmarketpy.economics.techindicator import TechIndicator
+import pandas as pd
+import numpy as np
+
+class CustomTechIndicator(TechIndicator):
+    &quot;&quot;&quot;Extended technical indicators with custom signals.&quot;&quot;&quot;
+
+    def create_tech_ind(self, data_frame_non_nan, name, tech_params,
+                        data_frame_non_nan_early=None):
+        if name == &quot;VWAP_CROSS&quot;:
+            # Custom VWAP crossover signal
+            data_frame = data_frame_non_nan.ffill()
+
+            vwap = self._calculate_vwap(data_frame, tech_params)
+            self._techind = vwap
+
+            narray = np.where(data_frame &gt; vwap, 1, -1)
+            self._signal = pd.DataFrame(index=data_frame.index, data=narray)
+            self._signal.columns = [
+                x + &quot; VWAP Signal&quot; for x in data_frame.columns.values]
+            self._techind.columns = [
+                x + &quot; VWAP&quot; for x in data_frame.columns.values]
+        else:
+            # Fall back to parent for standard indicators
+            super().create_tech_ind(data_frame_non_nan, name, tech_params,
+                                    data_frame_non_nan_early)
+
+    def _calculate_vwap(self, df, tech_params):
+        # Custom VWAP calculation
+        window = getattr(tech_params, 'vwap_period', 20)
+        return df.rolling(window=window).mean()
+</code></pre>
+<h3 id="adding-a-new-curve-class">Adding a New Curve Class<a class="headerlink" href="#adding-a-new-curve-class" title="Permanent link">&para;</a></h3>
+<p>To add total return index construction for a new asset class:</p>
+<pre><code class="language-python">from finmarketpy.curve.abstractcurve import AbstractCurve
+from findatapy.market.ioengine import SpeedCache
+
+class EquityIndexCurve(AbstractCurve):
+    &quot;&quot;&quot;Constructs total return indices for equity indices
+    including dividend reinvestment.
+    &quot;&quot;&quot;
+
+    def __init__(self, market_data_generator=None):
+        self._market_data_generator = market_data_generator
+
+    def generate_key(self):
+        return SpeedCache().generate_key(
+            self, ['_market_data_generator'])
+
+    def fetch_continuous_time_series(self, md_request,
+                                     market_data_generator):
+        # Fetch price and dividend data
+        ...
+
+    def construct_total_returns_index(self, price_df, dividend_df):
+        # Compute total return with dividend reinvestment
+        ...
+</code></pre>
+<h3 id="custom-portfolio-weight-construction">Custom Portfolio Weight Construction<a class="headerlink" href="#custom-portfolio-weight-construction" title="Permanent link">&para;</a></h3>
+<p>Replace the default weighting scheme by subclassing <code>PortfolioWeightConstruction</code>:</p>
+<pre><code class="language-python">from finmarketpy.backtest.backtestengine import PortfolioWeightConstruction
+
+class RiskParityWeights(PortfolioWeightConstruction):
+    &quot;&quot;&quot;Risk parity weighting: inverse volatility allocation.&quot;&quot;&quot;
+
+    def optimize_portfolio_weights(self, returns_df, signal_df,
+                                    signal_pnl_cols, br=None):
+        # Compute inverse-vol weights
+        vol = returns_df.rolling(60).std() * np.sqrt(252)
+        inv_vol = 1.0 / vol
+        weights = inv_vol.div(inv_vol.sum(axis=1), axis=0)
+
+        # Continue with standard logic using custom weights
+        ...
+
+# Use in BacktestRequest:
+br = BacktestRequest()
+br.portfolio_weight_construction = RiskParityWeights(br=br)
+</code></pre>
+<h2 id="code-conventions">Code Conventions<a class="headerlink" href="#code-conventions" title="Permanent link">&para;</a></h2>
+<h3 id="naming">Naming<a class="headerlink" href="#naming" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Classes: <code>PascalCase</code> (e.g., <code>BacktestRequest</code>, <code>TradingModel</code>)</li>
+<li>Methods/functions: <code>snake_case</code> (e.g., <code>calculate_trading_PnL</code>, <code>create_tech_ind</code>)</li>
+<li>Private attributes: double underscore prefix in <code>BacktestRequest</code> properties (<code>self.__signal_delay</code>), single underscore in <code>Backtest</code> results (<code>self._pnl</code>)</li>
+<li>DataFrame columns: <code>{ticker}.{field}</code> format (e.g., <code>EURUSD.close</code>)</li>
+</ul>
+<h3 id="signal-conventions">Signal Conventions<a class="headerlink" href="#signal-conventions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Long signal: <code>+1</code></li>
+<li>Short signal: <code>-1</code></li>
+<li>Flat/no position: <code>0</code></li>
+<li>Signals are stored as DataFrames with the same index as asset prices</li>
+<li>Signal columns must correspond to asset columns</li>
+</ul>
+<h3 id="return-conventions">Return Conventions<a class="headerlink" href="#return-conventions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Returns are simple period returns (not log returns)</li>
+<li>Cumulative indices: multiplicative (starting at 100) or additive (starting at 0), controlled by <code>BacktestRequest.cum_index</code></li>
+<li>Transaction costs are expressed in basis points (bid to mid, so half-spread)</li>
+<li>Annualization factor: 252 trading days by default (<code>BacktestRequest.ann_factor</code>)</li>
+</ul>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<h3 id="1-always-copy-backtestrequest-before-modifying">1. Always Copy BacktestRequest Before Modifying<a class="headerlink" href="#1-always-copy-backtestrequest-before-modifying" title="Permanent link">&para;</a></h3>
+<p>When running sensitivity analysis, always use <code>copy.copy()</code> to avoid mutating the original:</p>
+<pre><code class="language-python">import copy
+br_modified = copy.copy(trading_model.load_parameters())
+br_modified.spot_tc_bp = 5.0
+</code></pre>
+<h3 id="2-use-marketcred-for-credentials">2. Use MarketCred for Credentials<a class="headerlink" href="#2-use-marketcred-for-credentials" title="Permanent link">&para;</a></h3>
+<p>Never hardcode API keys or database passwords in strategy code. Create <code>src/finmarketpy/util/marketcred.py</code>:</p>
+<pre><code class="language-python">class MarketCred(object):
+    db_username = 'your_username'
+    db_password = 'your_password'
+    backtest_thread_no = {'linux': 4, 'windows': 1, 'mac': 4}
+</code></pre>
+<h3 id="3-platform-specific-threading">3. Platform-Specific Threading<a class="headerlink" href="#3-platform-specific-threading" title="Permanent link">&para;</a></h3>
+<p>Set <code>backtest_thread_no</code> to 1 on Windows to avoid multiprocessing issues. On Linux/Mac, 4-8 threads typically works well. Some data providers rate-limit parallel requests.</p>
+<h3 id="4-vol-target-consistency">4. Vol Target Consistency<a class="headerlink" href="#4-vol-target-consistency" title="Permanent link">&para;</a></h3>
+<p>When comparing strategies against benchmarks, apply the same vol target to both. <code>TradingModel.compare_strategy_vs_benchmark()</code> handles this automatically when <code>br.portfolio_vol_adjust = True</code>.</p>
+<h3 id="5-signal-delay">5. Signal Delay<a class="headerlink" href="#5-signal-delay" title="Permanent link">&para;</a></h3>
+<p>Set <code>br.signal_delay = 1</code> to avoid look-ahead bias when signals are generated from close prices and trades execute on the next day's close.</p>
+<h2 id="dependency-architecture">Dependency Architecture<a class="headerlink" href="#dependency-architecture" title="Permanent link">&para;</a></h2>
+<div class="diagram"><pre class="mermaid">graph TB
+    subgraph &quot;Core Dependencies&quot;
+        pandas[pandas &gt;= 2.3.3]
+        numpy[numpy &gt;= 2.3.4]
+        numba[numba &gt;= 0.62.1]
+    end
+
+    subgraph &quot;Cuemacro Ecosystem&quot;
+        findatapy[findatapy &gt;= 0.1.40]
+        chartpy[chartpy &gt;= 0.1.16]
+    end
+
+    subgraph &quot;Parallel Processing&quot;
+        multiprocess[multiprocess &gt;= 0.70.18]
+        blosc[blosc &gt;= 1.11.3]
+    end
+
+    subgraph &quot;Analytics&quot;
+        sklearn[scikit-learn &gt;= 1.7.2]
+        seasonal[seasonal &gt;= 0.3.1]
+    end
+
+    subgraph &quot;Optional&quot;
+        financepy[financepy == 0.370&lt;br/&gt;FX options pricing]
+    end
+
+    finmarketpy --&gt; pandas
+    finmarketpy --&gt; numpy
+    finmarketpy --&gt; numba
+    finmarketpy --&gt; findatapy
+    finmarketpy --&gt; chartpy
+    finmarketpy --&gt; multiprocess
+    finmarketpy --&gt; blosc
+    finmarketpy --&gt; sklearn
+    findatapy --&gt; pandas
+    chartpy --&gt; pandas</pre><details><summary>Diagram source</summary><pre><code>graph TB
+    subgraph &quot;Core Dependencies&quot;
+        pandas[pandas &gt;= 2.3.3]
+        numpy[numpy &gt;= 2.3.4]
+        numba[numba &gt;= 0.62.1]
+    end
+
+    subgraph &quot;Cuemacro Ecosystem&quot;
+        findatapy[findatapy &gt;= 0.1.40]
+        chartpy[chartpy &gt;= 0.1.16]
+    end
+
+    subgraph &quot;Parallel Processing&quot;
+        multiprocess[multiprocess &gt;= 0.70.18]
+        blosc[blosc &gt;= 1.11.3]
+    end
+
+    subgraph &quot;Analytics&quot;
+        sklearn[scikit-learn &gt;= 1.7.2]
+        seasonal[seasonal &gt;= 0.3.1]
+    end
+
+    subgraph &quot;Optional&quot;
+        financepy[financepy == 0.370&lt;br/&gt;FX options pricing]
+    end
+
+    finmarketpy --&gt; pandas
+    finmarketpy --&gt; numpy
+    finmarketpy --&gt; numba
+    finmarketpy --&gt; findatapy
+    finmarketpy --&gt; chartpy
+    finmarketpy --&gt; multiprocess
+    finmarketpy --&gt; blosc
+    finmarketpy --&gt; sklearn
+    findatapy --&gt; pandas
+    chartpy --&gt; pandas</code></pre></details></div>
+
+<h3 id="optional-dependencies">Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>financepy</strong>: Required only for <code>FXVolSurface</code>, <code>FXOptionsPricer</code>, and <code>FXOptionsCurve</code>. Install with <code>pip install financepy==0.370 --no-deps</code> to avoid version conflicts.</li>
+<li><strong>blosc</strong>: Required for parallel backtest compression. Import is wrapped in try/except.</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="numba-cache-issues">Numba Cache Issues<a class="headerlink" href="#numba-cache-issues" title="Permanent link">&para;</a></h3>
+<p>If you see <code>Failed in nopython mode pipeline</code> errors (especially with financepy), delete <code>__pycache__</code> folders in the financepy installation directory.</p>
+<h3 id="financepy-version-conflicts">financepy Version Conflicts<a class="headerlink" href="#financepy-version-conflicts" title="Permanent link">&para;</a></h3>
+<p>financepy's API changes frequently. finmarketpy targets <code>financepy==0.370</code>. Install with <code>--no-deps</code> to prevent transitive dependency conflicts.</p>
+<h3 id="parallel-processing-on-windows">Parallel Processing on Windows<a class="headerlink" href="#parallel-processing-on-windows" title="Permanent link">&para;</a></h3>
+<p>Windows multiprocessing has known issues with pickling. Set:</p>
+<pre><code class="language-python">MarketConstants.backtest_thread_no = {'linux': 8, 'windows': 1, 'mac': 8}
+</code></pre>
+<p>Or in <code>marketcred.py</code>:</p>
+<pre><code class="language-python">class MarketCred(object):
+    backtest_thread_no = {'linux': 8, 'windows': 1, 'mac': 8}
+</code></pre>
+<h3 id="large-backtest-memory-usage">Large Backtest Memory Usage<a class="headerlink" href="#large-backtest-memory-usage" title="Permanent link">&para;</a></h3>
+<p>For large universes, the <code>Backtest</code> object stores many DataFrames. If memory is a concern:
+- Use <code>compress_output=True</code> in <code>construct_individual_strategy()</code> (uses blosc compression)
+- Reduce the number of parallel workers
+- Process basket keys sequentially rather than in parallel</p>
+<h3 id="signal-and-asset-column-mismatch">Signal and Asset Column Mismatch<a class="headerlink" href="#signal-and-asset-column-mismatch" title="Permanent link">&para;</a></h3>
+<p>If the backtest raises <code>KeyError</code> or produces NaN P&amp;L, verify that signal DataFrame columns match asset DataFrame columns exactly. The convention is <code>{ticker}.{field}</code> (e.g., <code>EURUSD.close</code>). Column names are case-sensitive and must align between signal, spot, and asset DataFrames.</p>
+<h3 id="findatapy-or-chartpy-import-errors">findatapy or chartpy Import Errors<a class="headerlink" href="#findatapy-or-chartpy-import-errors" title="Permanent link">&para;</a></h3>
+<p>finmarketpy depends on <code>findatapy</code> and <code>chartpy</code> from the Cuemacro ecosystem. These are not on the default PyPI index for all versions. Install from GitHub if pip fails: <code>pip install git+https://github.com/cuemacro/findatapy.git</code>. Ensure all three libraries use compatible versions.</p>
+<h2 id="configuration-reference">Configuration Reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h2>
+<h3 id="backtestrequest-parameters">BacktestRequest Parameters<a class="headerlink" href="#backtestrequest-parameters" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start_date</code></td>
+<td>str</td>
+<td>None</td>
+<td>Backtest start date (inherited from MarketDataRequest)</td>
+</tr>
+<tr>
+<td><code>finish_date</code></td>
+<td>str</td>
+<td>None</td>
+<td>Backtest end date (inherited from MarketDataRequest)</td>
+</tr>
+<tr>
+<td><code>spot_tc_bp</code></td>
+<td>float</td>
+<td>None</td>
+<td>Transaction cost in basis points (bid-to-mid, i.e. half-spread)</td>
+</tr>
+<tr>
+<td><code>trading_field</code></td>
+<td>str</td>
+<td><code>'close'</code></td>
+<td>Price field to use for trading signals</td>
+</tr>
+<tr>
+<td><code>signal_delay</code></td>
+<td>int</td>
+<td><code>0</code></td>
+<td>Bars to delay signal application (1 = avoid look-ahead bias)</td>
+</tr>
+<tr>
+<td><code>ann_factor</code></td>
+<td>int</td>
+<td><code>252</code></td>
+<td>Annualization factor for return statistics</td>
+</tr>
+<tr>
+<td><code>cum_index</code></td>
+<td>str</td>
+<td><code>'mult'</code></td>
+<td>Cumulative index type: <code>'mult'</code> (starts at 100) or <code>'add'</code> (starts at 0)</td>
+</tr>
+<tr>
+<td><code>portfolio_vol_adjust</code></td>
+<td>bool</td>
+<td><code>False</code></td>
+<td>Enable portfolio-level volatility targeting</td>
+</tr>
+<tr>
+<td><code>portfolio_vol_target</code></td>
+<td>float</td>
+<td><code>0.10</code></td>
+<td>Target annualized volatility (10%)</td>
+</tr>
+<tr>
+<td><code>portfolio_vol_periods</code></td>
+<td>int</td>
+<td><code>20</code></td>
+<td>Lookback window for vol estimation</td>
+</tr>
+<tr>
+<td><code>portfolio_vol_obs_in_year</code></td>
+<td>int</td>
+<td><code>252</code></td>
+<td>Observations per year for vol annualization</td>
+</tr>
+<tr>
+<td><code>portfolio_vol_max_leverage</code></td>
+<td>float</td>
+<td>None</td>
+<td>Maximum leverage cap (None = uncapped)</td>
+</tr>
+<tr>
+<td><code>portfolio_vol_rebalance_freq</code></td>
+<td>str</td>
+<td>None</td>
+<td>Rebalance frequency for vol targeting</td>
+</tr>
+<tr>
+<td><code>signal_vol_adjust</code></td>
+<td>bool</td>
+<td><code>False</code></td>
+<td>Enable signal-level volatility targeting</td>
+</tr>
+<tr>
+<td><code>signal_vol_target</code></td>
+<td>float</td>
+<td><code>0.10</code></td>
+<td>Target annualized volatility at signal level</td>
+</tr>
+<tr>
+<td><code>signal_vol_periods</code></td>
+<td>int</td>
+<td><code>20</code></td>
+<td>Lookback window for signal vol estimation</td>
+</tr>
+<tr>
+<td><code>max_net_exposure</code></td>
+<td>float</td>
+<td>None</td>
+<td>Maximum net portfolio exposure</td>
+</tr>
+<tr>
+<td><code>max_abs_exposure</code></td>
+<td>float</td>
+<td>None</td>
+<td>Maximum absolute portfolio exposure</td>
+</tr>
+<tr>
+<td><code>take_profit</code></td>
+<td>float</td>
+<td>None</td>
+<td>Take profit level (as fraction of entry)</td>
+</tr>
+<tr>
+<td><code>stop_loss</code></td>
+<td>float</td>
+<td>None</td>
+<td>Stop loss level (as fraction of entry)</td>
+</tr>
+<tr>
+<td><code>calc_stats</code></td>
+<td>bool</td>
+<td><code>True</code></td>
+<td>Calculate return statistics on output</td>
+</tr>
+<tr>
+<td><code>write_csv</code></td>
+<td>bool</td>
+<td><code>False</code></td>
+<td>Write results to CSV files</td>
+</tr>
+<tr>
+<td><code>portfolio_weight_construction</code></td>
+<td>object</td>
+<td>None</td>
+<td>Custom <code>PortfolioWeightConstruction</code> instance</td>
+</tr>
+</tbody>
+</table>
+<h3 id="techparams-parameters">TechParams Parameters<a class="headerlink" href="#techparams-parameters" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fillna</code></td>
+<td>bool</td>
+<td><code>True</code></td>
+<td>Forward-fill NaN values before indicator calculation</td>
+</tr>
+<tr>
+<td><code>sma_period</code></td>
+<td>int</td>
+<td><code>20</code></td>
+<td>Simple moving average lookback period</td>
+</tr>
+<tr>
+<td><code>ema_period</code></td>
+<td>int</td>
+<td>--</td>
+<td>Exponential moving average span</td>
+</tr>
+<tr>
+<td><code>roc_period</code></td>
+<td>int</td>
+<td>--</td>
+<td>Rate of change lookback period</td>
+</tr>
+<tr>
+<td><code>sma2_period</code></td>
+<td>int</td>
+<td>--</td>
+<td>Second SMA period for dual-SMA crossover</td>
+</tr>
+<tr>
+<td><code>atr_period</code></td>
+<td>int</td>
+<td><code>14</code></td>
+<td>Average True Range lookback period</td>
+</tr>
+<tr>
+<td><code>bb_period</code></td>
+<td>int</td>
+<td>--</td>
+<td>Bollinger Bands lookback period</td>
+</tr>
+<tr>
+<td><code>bb_mult</code></td>
+<td>float</td>
+<td>--</td>
+<td>Bollinger Bands standard deviation multiplier</td>
+</tr>
+<tr>
+<td><code>rsi_period</code></td>
+<td>int</td>
+<td>--</td>
+<td>RSI lookback period</td>
+</tr>
+<tr>
+<td><code>rsi_upper</code></td>
+<td>float</td>
+<td>--</td>
+<td>RSI overbought threshold</td>
+</tr>
+<tr>
+<td><code>rsi_lower</code></td>
+<td>float</td>
+<td>--</td>
+<td>RSI oversold threshold</td>
+</tr>
+</tbody>
+</table>
+<h3 id="marketconstants-settings">MarketConstants Settings<a class="headerlink" href="#marketconstants-settings" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backtest_thread_technique</code></td>
+<td>str</td>
+<td><code>'multiprocessing'</code></td>
+<td>Parallel backend: <code>'thread'</code> or <code>'multiprocessing'</code></td>
+</tr>
+<tr>
+<td><code>backtest_thread_no</code></td>
+<td>dict</td>
+<td><code>{'linux': 8, 'windows': 1, 'mac': 8}</code></td>
+<td>Thread count per platform</td>
+</tr>
+<tr>
+<td><code>multiprocessing_library</code></td>
+<td>str</td>
+<td><code>'multiprocess'</code></td>
+<td>Library: <code>'multiprocess'</code>, <code>'multiprocessing'</code>, or <code>'pathos'</code></td>
+</tr>
+<tr>
+<td><code>fx_forwards_trading_tenor</code></td>
+<td>str</td>
+<td><code>'1M'</code></td>
+<td>Default FX forwards trading tenor</td>
+</tr>
+<tr>
+<td><code>fx_forwards_roll_event</code></td>
+<td>str</td>
+<td><code>'month-end'</code></td>
+<td>Roll trigger: <code>'month-end'</code>, <code>'quarter-end'</code>, <code>'year-end'</code>, <code>'delivery-date'</code></td>
+</tr>
+<tr>
+<td><code>fx_forwards_roll_days_before</code></td>
+<td>int</td>
+<td><code>5</code></td>
+<td>Days before roll event to execute roll</td>
+</tr>
+<tr>
+<td><code>fx_options_vol_function_type</code></td>
+<td>str</td>
+<td><code>'CLARK5'</code></td>
+<td>Vol surface model: <code>'CLARK5'</code>, <code>'CLARK'</code>, <code>'BBG'</code>, <code>'SABR'</code>, <code>'SABR3'</code></td>
+</tr>
+<tr>
+<td><code>fx_options_pricing_engine</code></td>
+<td>str</td>
+<td><code>'financepy'</code></td>
+<td>Pricing engine: <code>'financepy'</code> or <code>'finmarketpy'</code></td>
+</tr>
+<tr>
+<td><code>fx_options_solver</code></td>
+<td>str</td>
+<td><code>'nelmer-mead-numba'</code></td>
+<td>Optimizer: <code>'nelmer-mead'</code>, <code>'nelmer-mead-numba'</code>, <code>'cg'</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Credential isolation</strong>: Never store API keys or database passwords in source code. Create a <code>marketcred.py</code> file in <code>src/finmarketpy/util/</code> (excluded from version control) to override <code>MarketConstants</code> defaults. The <code>MarketCred</code> class attributes automatically override matching <code>MarketConstants</code> attributes at instantiation.</li>
+<li><strong>Database access</strong>: MongoDB connection parameters (<code>db_server</code>, <code>db_port</code>, <code>db_username</code>, <code>db_password</code>) are configured via <code>MarketConstants</code>. In production, override these via <code>MarketCred</code> and restrict database network access to trusted hosts.</li>
+<li><strong>Parallel processing risks</strong>: When using <code>multiprocessing</code> backend, ensure that pickled objects (strategies, data) do not contain credentials. The <code>multiprocess</code> library uses <code>dill</code> serialization which can serialize closures containing sensitive data.</li>
+<li><strong>Third-party data sources</strong>: findatapy connects to external data providers (Quandl, Bloomberg, etc.). Audit <code>MarketDataRequest</code> parameters before execution to avoid unintended data provider calls that may incur API charges.</li>
+<li><strong>Dependency pinning</strong>: Pin <code>financepy==0.370</code> exactly -- newer versions have breaking API changes. Use <code>--no-deps</code> when installing to prevent transitive dependency conflicts that could introduce vulnerable packages.</li>
+<li><strong>Log output</strong>: The <code>LoggerManager</code> may log market data request parameters including ticker symbols and date ranges. In regulated environments, ensure log storage complies with data handling policies.</li>
+</ul>
+<hr />
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="README.md">README</a> — Project overview and quick start</li>
+<li><a href="architecture.md">Architecture</a> — System design and components</li>
+<li><a href="workflow.md">Workflow</a> — Event flows and processing pipelines</li>
+<li><a href="state-management.md">State Management</a> — State lifecycle and data models</li>
+</ul></main>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12.1.0/dist/mermaid.esm.min.mjs';
+mermaid.initialize({startOnLoad:true,securityLevel:'strict',theme:'default',flowchart:{useMaxWidth:true},sequence:{useMaxWidth:true}});
+</script></body></html>

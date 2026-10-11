@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling>=1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chartpy"
+version = "0.1.16+ayu1"
+requires-python = ">=3.13"
+license-files = ["LICENCE"]
+dependencies = ["pandas", "matplotlib", "pdfkit", "twython", "pytz", "requests", "numpy", "plotly>=4.5.1", "bokeh", "vispy", "reportlab", "dataframe-image"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chartpy"]

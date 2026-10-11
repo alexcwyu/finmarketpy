@@ -4,20 +4,21 @@ version = "0.11.19"
 description = "finmarketpy is a Python based library for backtesting trading strategies"
 authors = [{name='Saeed Amen', email= 'saeed@cuemacro.com'}]
 readme = "README.md"
-requires-python = "==3.13.*"
+requires-python = ">=3.13,<3.15"
 license = {text = "Apache-2.0"}
 dependencies = [
-    "blosc>=1.11.3",
+    "plotly>=5.24.1,<6",
+    "blosc>=1.11.4",
     "chartpy>=0.1.16",
-    "findatapy>=0.1.40",
-    "matplotlib>=3.10.7",
-    "multiprocess>=0.70.18",
-    "numba>=0.62.1",
-    "numpy>=2.3.4",
-    "pandas>=2.3.3",
-    "pytz>=2025.2",
-    "requests>=2.32.5",
-    "scikit-learn>=1.7.2",
+    "findatapy>=0.1.42",
+    "matplotlib>=3.11.2",
+    "multiprocess>=0.70.19",
+    "numba>=0.68.0",
+    "numpy>=2.5.4",
+    "pandas>=3.0.6",
+    "pytz>=2026.5",
+    "requests>=2.34.2",
+    "scikit-learn>=1.9.1",
     "seasonal>=0.3.1",
     "twython>=3.9.1",
 ]
@@ -40,11 +41,11 @@ Homepage = "https://github.com/cuemacro/finmarketpy"
 
 [dependency-groups]
 dev = [
-    "pytest-cov>=6.0.0",
-    "pytest>=9.0",
-    "pre-commit>=4.0.1",
-    "deptry>=0.23.0",
-    "marimo>=0.11.16",
+    "pytest-cov>=7.1.0",
+    "pytest>=9.1.1",
+    "pre-commit>=4.6.2",
+    "deptry>=0.25.1",
+    "marimo>=0.25.1",
 ]
 
 [tool.uv]
@@ -61,7 +62,7 @@ exclude = [
 select = ["E", "W", "F", "I", "UP", "B", "SIM", "C4", "RUF", "PERF", "TC", "PTH"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.32.4"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -92,3 +93,10 @@ exclude_dirs = ["tests"]
 [tool.deptry.per_rule_ignores]
 #DEP001 = ["pyfolio"]       # very dated dependency!
 DEP003 = ["finmarketpy"]
+
+[tool.uv.sources]
+findatapy = {path = "vendor/findatapy"}
+chartpy = {path = "vendor/chartpy"}
+
+[tool.hatch.build.targets.sdist]
+include = ["LICENSE", "README.md", "src/finmarketpy", "vendor", "pyproject.toml", "uv.lock", ".python-version"]

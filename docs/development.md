@@ -1,3 +1,38 @@
+<!-- ayu-maintenance-2026-10-12 -->
+# Current uv development workflow
+
+The maintained branch is `feature/ayu_develop`. The selected interpreter is Python `3.14`; `requires-python` records the range that was actually resolved. Python 3.15 was attempted first. Dependency/native-wheel failures and fallback evidence are recorded in [validation.md](validation.md).
+
+```sh
+export UV_PYTHON_PREFERENCE=only-managed
+uv python install 3.14
+uv lock --check
+uv sync --frozen --all-extras --all-groups
+uv run --no-sync python -m compileall -q src
+uv build
+uv run --no-sync python -m pytest
+```
+
+Use `uv lock --upgrade` when intentionally refreshing dependencies, then review `pyproject.toml`, `uv.lock`, and the existing full test suite. The dependency floors were refreshed from current PyPI release metadata while preserving meaningful upstream upper bounds. Compatibility exceptions are documented with their resolver/test evidence rather than hidden by disabling tests.
+
+The `src/` layout and build-backend package discovery preserve public import names. Wheel/sdist resources include the source-associated data and templates. Optional vendor SDKs, live credentials, databases and graphical/native libraries retain their original runtime requirements. Examples and test fixtures are not promoted into the library API.
+
+<!-- prior-development-notes -->
+
+## Compatibility decisions
+
+- The complete supplied tests pass with current scientific dependencies.
+- findatapy 0.1.42 and chartpy 0.1.16 still use deprecated UTC constructors upstream. Verified licensed local sources preserve naive-UTC results and have documented hashes, refresh/retirement instructions and original licenses.
+- Chartpy imports Plotly private OHLC machinery removed in Plotly6; Plotly>=5.24.1,<6 is the proven compatible range.
+- The source archive includes vendor sources; uv sources select them. Ordinary wheel installers do not interpret tool.uv.sources, so use the documented uv checkout/sdist workflow to reproduce these patches.
+
+- [Verified dependency source and license: chartpy](../vendor/chartpy/PROVENANCE.md)
+- [Verified dependency source and license: findatapy](../vendor/findatapy/PROVENANCE.md)
+
+
+
+
+
 # Development Guide
 
 This document covers development standards, design patterns, best practices, and extension points for finmarketpy.
