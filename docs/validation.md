@@ -36,23 +36,23 @@ Unsuccessful rows are retained as historical compatibility attempts; they are no
 
 | Command | Exit | Seconds | Evidence |
 |---|---:|---:|---|
-| `uv lock --upgrade --python 3.15` | 0 | 0.86 | [log](../../docs/maintenance-2026-10-12/finmarketpy-lock-3.15.log) |
-| `uv sync --all-extras --all-groups --python 3.15 --no-build --no-install-project` | 2 | 2.95 | [log](../../docs/maintenance-2026-10-12/finmarketpy-wheel-probe-3.15.log) |
-| `uv lock --upgrade --python 3.14` | 0 | 0.4 | [log](../../docs/maintenance-2026-10-12/finmarketpy-lock-3.14.log) |
-| `uv sync --all-extras --all-groups --python 3.14 --no-build --no-install-project` | 2 | 0.05 | [log](../../docs/maintenance-2026-10-12/finmarketpy-wheel-probe-3.14.log) |
-| `uv sync --all-extras --all-groups --python 3.14` | 0 | 3.36 | [log](../../docs/maintenance-2026-10-12/finmarketpy-sync-3.14.log) |
-| `uv build --python 3.14` | 0 | 0.98 | [log](../../docs/maintenance-2026-10-12/finmarketpy-build.log) |
-| `/Users/alex/.local/share/uv/python/cpython-3.14-macos-aarch64-none/bin/python3.14 -m compileall -q src` | 0 | 0.08 | [log](../../docs/maintenance-2026-10-12/finmarketpy-compile.log) |
-| `uv run --no-sync python -m pytest` | 2 | 13.42 | [log](../../docs/maintenance-2026-10-12/finmarketpy-tests.log) |
-| `uv lock --upgrade --python 3.14` | 0 | 0.7 | [log](../../docs/maintenance-2026-10-12/finmarketpy-lock-chartpy-compatibility.log) |
-| `uv sync --all-extras --all-groups --python 3.14` | 0 | 0.88 | [log](../../docs/maintenance-2026-10-12/finmarketpy-sync-chartpy-compatibility.log) |
-| `uv run --no-sync python -m pytest` | 0 | 12.56 | [log](../../docs/maintenance-2026-10-12/finmarketpy-tests-chartpy-compatibility.log) |
-| `uv run --no-sync python -m compileall -q src` | 0 | 0.12 | [log](../../docs/maintenance-2026-10-12/finmarketpy-compile-final.log) |
-| `uv build --python 3.14` | 0 | 1.04 | [log](../../docs/maintenance-2026-10-12/finmarketpy-build-final.log) |
-| `uv run --no-sync python -c import sys,importlib.metadata,json; print(sys.version); print(json.dumps({d.metadata["Name"]: d.version for d in importlib.metadata.distributions()},indent=2,sort_keys=True))` | 0 | 0.23 | [log](../../docs/maintenance-2026-10-12/finmarketpy-versions-final.log) |
-| `uv sync --directory /tmp/trading-python315-probes/finmarketpy --all-extras --all-groups --python 3.15` | 1 | 136.76 | [log](../../docs/maintenance-2026-10-12/finmarketpy-python315-source-probe.log) |
+| `uv lock --upgrade --python 3.15` | 0 | 0.86 | [check record](maintenance/index.html) |
+| `uv sync --all-extras --all-groups --python 3.15 --no-build --no-install-project` | 2 | 2.95 | [check record](maintenance/index.html) |
+| `uv lock --upgrade --python 3.14` | 0 | 0.4 | [check record](maintenance/index.html) |
+| `uv sync --all-extras --all-groups --python 3.14 --no-build --no-install-project` | 2 | 0.05 | [check record](maintenance/index.html) |
+| `uv sync --all-extras --all-groups --python 3.14` | 0 | 3.36 | [check record](maintenance/index.html) |
+| `uv build --python 3.14` | 0 | 0.98 | [check record](maintenance/index.html) |
+| `/Users/alex/.local/share/uv/python/cpython-3.14-macos-aarch64-none/bin/python3.14 -m compileall -q src` | 0 | 0.08 | [check record](maintenance/index.html) |
+| `uv run --no-sync python -m pytest` | 2 | 13.42 | [check record](maintenance/index.html) |
+| `uv lock --upgrade --python 3.14` | 0 | 0.7 | [check record](maintenance/index.html) |
+| `uv sync --all-extras --all-groups --python 3.14` | 0 | 0.88 | [check record](maintenance/index.html) |
+| `uv run --no-sync python -m pytest` | 0 | 12.56 | [check record](maintenance/index.html) |
+| `uv run --no-sync python -m compileall -q src` | 0 | 0.12 | [check record](maintenance/index.html) |
+| `uv build --python 3.14` | 0 | 1.04 | [check record](maintenance/index.html) |
+| `uv run --no-sync python -c import sys,importlib.metadata,json; print(sys.version); print(json.dumps({d.metadata["Name"]: d.version for d in importlib.metadata.distributions()},indent=2,sort_keys=True))` | 0 | 0.23 | [check record](maintenance/index.html) |
+| `uv sync --directory /tmp/trading-python315-probes/finmarketpy --all-extras --all-groups --python 3.15` | 1 | 136.76 | [check record](maintenance/index.html) |
 
-The versions-final log records the exact interpreter patch release and every installed dependency version. The machine-readable [result](../../docs/maintenance-2026-10-12/finmarketpy-result.json) includes branch/default ancestry, status, artifacts and unresolved checks.
+The versions-final log records the exact interpreter patch release and every installed dependency version. The machine-readable [verification record](maintenance/verification.json) includes branch/default ancestry, status, artifacts and unresolved checks.
 
 ## Dependency floor refresh
 

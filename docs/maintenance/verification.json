@@ -1,0 +1,198 @@
+{
+  "repository": "finmarketpy",
+  "source_commit_before_documentation_commit": "5007945b554fe89fdf617f16cbc9fc84a1437d5e",
+  "recorded_on": "2026-10-12",
+  "records": [
+    {
+      "command": "uv build --python 3.14",
+      "exit_code": 0,
+      "seconds": 0.98,
+      "check": "build",
+      "original_log": "finmarketpy-build.log",
+      "log_sha256": "e83251a58be46cf2396f770ec729ebfafa00d033a11b24a1fba67554bd842bf0",
+      "outcomes": [
+        "Successfully built dist/finmarketpy-0.11.19.tar.gz",
+        "Successfully built dist/finmarketpy-0.11.19-py3-none-any.whl"
+      ]
+    },
+    {
+      "command": "uv build --python 3.14",
+      "exit_code": 0,
+      "seconds": 1.04,
+      "check": "build-final",
+      "original_log": "finmarketpy-build-final.log",
+      "log_sha256": "e83251a58be46cf2396f770ec729ebfafa00d033a11b24a1fba67554bd842bf0",
+      "outcomes": [
+        "Successfully built dist/finmarketpy-0.11.19.tar.gz",
+        "Successfully built dist/finmarketpy-0.11.19-py3-none-any.whl"
+      ]
+    },
+    {
+      "command": "/Users/alex/.local/share/uv/python/cpython-3.14-macos-aarch64-none/bin/python3.14 -m compileall -q src",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "check": "compile",
+      "original_log": "finmarketpy-compile.log",
+      "log_sha256": "cdad8d31f71f9ca30ecb973875a31a35e82562441812821f059e0f67f0cb87cf",
+      "outcomes": []
+    },
+    {
+      "command": "uv run --no-sync python -m compileall -q src",
+      "exit_code": 0,
+      "seconds": 0.12,
+      "check": "compile-final",
+      "original_log": "finmarketpy-compile-final.log",
+      "log_sha256": "18836bd061fd2cbbcee4cfbe11a0c5bb8956a47a78decc98b17bdc695bd896a7",
+      "outcomes": []
+    },
+    {
+      "command": "uv lock --upgrade --python 3.14",
+      "exit_code": 0,
+      "seconds": 0.4,
+      "check": "lock-3.14",
+      "original_log": "finmarketpy-lock-3.14.log",
+      "log_sha256": "57d399bbc70f549542f76bd075b02cd094df5c549d4456f99e861de02b423cf3",
+      "outcomes": []
+    },
+    {
+      "command": "uv lock --upgrade --python 3.15",
+      "exit_code": 0,
+      "seconds": 0.86,
+      "check": "lock-3.15",
+      "original_log": "finmarketpy-lock-3.15.log",
+      "log_sha256": "9d85bdcbdc5db7807d876987f1b8c469557af300e8c7f7acecccab0eb8934780",
+      "outcomes": []
+    },
+    {
+      "command": "uv lock --upgrade --python 3.14",
+      "exit_code": 0,
+      "seconds": 0.7,
+      "check": "lock-chartpy-compatibility",
+      "original_log": "finmarketpy-lock-chartpy-compatibility.log",
+      "log_sha256": "0c3bc7de86a254d8053c61ed8ed52303af10e1ad0402e53159ca09ea99d830f5",
+      "outcomes": []
+    },
+    {
+      "command": "uv sync --directory /tmp/trading-python315-probes/finmarketpy --all-extras --all-groups --python 3.15",
+      "exit_code": 1,
+      "seconds": 136.76,
+      "check": "python315-source-probe",
+      "original_log": "finmarketpy-python315-source-probe.log",
+      "log_sha256": "fdf11e64f6135144fffb3c7682cc556cc87140cc7f81b68e339443379eb39ea2",
+      "outcomes": []
+    },
+    {
+      "command": "uv sync --all-extras --all-groups --python 3.14",
+      "exit_code": 0,
+      "seconds": 3.36,
+      "check": "sync-3.14",
+      "original_log": "finmarketpy-sync-3.14.log",
+      "log_sha256": "eb810cbcd6981055323ade1d82291ea739df84498b98379445b2080637a87b92",
+      "outcomes": []
+    },
+    {
+      "command": "uv sync --all-extras --all-groups --python 3.14",
+      "exit_code": 0,
+      "seconds": 0.88,
+      "check": "sync-chartpy-compatibility",
+      "original_log": "finmarketpy-sync-chartpy-compatibility.log",
+      "log_sha256": "4ac425f8b199c1df2b56e2d2eb8f3cacd43a78d8d5725c4796cd12960668d6be",
+      "outcomes": []
+    },
+    {
+      "command": "uv run --no-sync python -m pytest",
+      "exit_code": 2,
+      "seconds": 13.42,
+      "check": "tests",
+      "original_log": "finmarketpy-tests.log",
+      "log_sha256": "a58429bfc181b64084bc94f04be42a150daa7740ecbafe9882f695a6ab32a3ac",
+      "outcomes": []
+    },
+    {
+      "command": "uv run --no-sync python -m pytest",
+      "exit_code": 0,
+      "seconds": 12.56,
+      "check": "tests-chartpy-compatibility",
+      "original_log": "finmarketpy-tests-chartpy-compatibility.log",
+      "log_sha256": "d87f3915dad7d67a6caa3384151c36bde0a4511eb6a50976926c4a1b821dda11",
+      "outcomes": [
+        "5 passed in 8.18s"
+      ]
+    },
+    {
+      "command": "uv run --no-sync python -c import sys,importlib.metadata,json; print(sys.version); print(json.dumps({d.metadata[\"Name\"]: d.version for d in importlib.metadata.distributions()},indent=2,sort_keys=True))",
+      "exit_code": 0,
+      "seconds": 0.23,
+      "check": "versions-final",
+      "original_log": "finmarketpy-versions-final.log",
+      "log_sha256": "90ecf8c20ecab6e81a54c8644f190d3ae43c81184ff122d7c89e7c7d7a20184e",
+      "outcomes": []
+    },
+    {
+      "command": "uv sync --all-extras --all-groups --python 3.14 --no-build --no-install-project",
+      "exit_code": 2,
+      "seconds": 0.05,
+      "check": "wheel-probe-3.14",
+      "original_log": "finmarketpy-wheel-probe-3.14.log",
+      "log_sha256": "f98c8182c3f10cc68e3ebe7217ca2de8e4e063feebbef314ee0b3b1b613de7b3",
+      "outcomes": []
+    },
+    {
+      "command": "uv sync --all-extras --all-groups --python 3.15 --no-build --no-install-project",
+      "exit_code": 2,
+      "seconds": 2.95,
+      "check": "wheel-probe-3.15",
+      "original_log": "finmarketpy-wheel-probe-3.15.log",
+      "log_sha256": "c2b65c90059dfb426ab1240404729b64a4abecdc2b97581481f70c7b72fc7884",
+      "outcomes": []
+    }
+  ],
+  "summary": {
+    "repo": "finmarketpy",
+    "branch": "feature/ayu_develop",
+    "blockers": [],
+    "started": "2026-10-12T00:28:10+0800",
+    "dependency_updates": [],
+    "lock": "passed",
+    "python": "3.14",
+    "sync": "passed",
+    "build": "passed",
+    "compile": "passed",
+    "tests": "passed",
+    "test_summary": "$ uv run --no-sync python -m pytest\n.....                                                                    [100%]\n5 passed in 8.18s\n",
+    "finished": "2026-10-12T00:28:32+0800",
+    "head": "5007945b554fe89fdf617f16cbc9fc84a1437d5e",
+    "notes": [
+      "The complete supplied tests pass with current scientific dependencies.",
+      "findatapy 0.1.42 and chartpy 0.1.16 still use deprecated UTC constructors upstream. Verified licensed local sources preserve naive-UTC results and have documented hashes, refresh/retirement instructions and original licenses.",
+      "Chartpy imports Plotly private OHLC machinery removed in Plotly6; Plotly>=5.24.1,<6 is the proven compatible range.",
+      "The source archive includes vendor sources; uv sources select them. Ordinary wheel installers do not interpret tool.uv.sources, so use the documented uv checkout/sdist workflow to reproduce these patches."
+    ],
+    "python_version": "3.14.8 (main, Oct  9 2026, 15:11:09) [Clang 22.1.3 ]",
+    "failed_attempts": [
+      {
+        "python": "3.15",
+        "stage": "native wheel probe",
+        "details": "$ uv sync --all-extras --all-groups --python 3.15 --no-build --no-install-project\nUsing CPython 3.15.0\nRemoved virtual environment at: .venv\nCreating virtual environment at: .venv\nResolved 169 packages in 7ms\nerror: Distribution `blosc==1.11.4 @ registry+https://pypi.org/simple` can't be installed because it is marked as `--no-build` but has no binary distribution\n"
+      },
+      {
+        "stage": "tests",
+        "details": "$ uv run --no-sync python -m pytest\n\n==================================== ERRORS ====================================\n_________________ ERROR collecting tests/test_techindicator.py _________________\ntests/test_techindicator.py:19: in <module>\n    from finmarketpy.economics.techindicator import TechParams, TechIndicator\nsrc/finmarketpy/__init__.py:1: in <module>\n    from finmarketpy import (backtest, economics, util)\nsrc/finmarketpy/backtest/__init__.py:3: in <module>\n    from finmarketpy.backtest.backtestengine import Backtest\nsrc/finmarketpy/backtest/backtestengine.py:954: in <module>\n    class TradingModel(object):\nsrc/finmarketpy/backtest/backtestengine.py:970: in TradingModel\n    CHART_STYLE = Style()\n                  ^^^^^^^\n.venv/lib/python3.14/site-packages/chartpy/style.py:327: in __init__\n    plotly_url = plotly_url +  datetime.datetime.utcnow().strftime(\"%b-%d-%Y-%H-%M-%S\")\n                               ^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n=========================== short test summary info ============================\nERROR tests/test_techindicator.py - DeprecationWarning: datetime.datetime.utc...\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 11.59s\n"
+      }
+    ],
+    "unresolved_blockers": [],
+    "default_ancestry": {
+      "refs/remotes/origin/master": true
+    },
+    "merge_in_progress": false,
+    "artifact_files": [
+      "dist/finmarketpy-0.11.19-py3-none-any.whl",
+      "dist/.gitignore",
+      "dist/finmarketpy-0.11.19.tar.gz"
+    ],
+    "committed": true,
+    "pushed": false,
+    "worktree_status": "?? .DS_Store\n"
+  },
+  "note": "Full raw logs are retained in the workspace maintenance evidence, not distributed here. Hashes identify those original logs. A successful build or selected test subset does not imply a full test-suite pass. Commands containing <workspace> describe the original execution environment."
+}
