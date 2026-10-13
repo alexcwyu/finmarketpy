@@ -1,253 +1,190 @@
-# finmarketpy: development, architecture and operations
+# finmarketpy: workflow, design and architecture
 
-Updated 2026-10-12 on `feature/ayu_develop`; source snapshot `e194a39d6f46`. This guide follows the source in this checkout and separates available interfaces from verification evidence.
+Updated: **2026-10-13**
+Reviewed Git hash: `4fb1203b6f08edcac60c179b87114d90b6873567`
+Branch: `feature/ayu_develop`
+Source diff SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Scope: **Vectorized quantitative research toolkit** / Maintenance: **active**
+Languages: Python
 
-## Purpose and feature boundaries
+[HTML edition](ayu-develop.html) / [Development](development.md) / [Historical validation](validation.md) / [Full system comparison](../../docs/index.html)
 
-Market research and vectorized strategy backtesting with technical indicators, risk targeting, economic event studies, seasonality and FX total-return curves.
+## Purpose and scope
 
-findatapy supplies market-data abstractions and chartpy supplies charting. Backtest requests carry trading costs, volatility targeting and position constraints. Economics and curve modules are independent analysis layers on top of time series. MarketConstants centralizes parallelism and roll conventions; provider credentials and optional pricing libraries control which external workflows are runnable.
+Construct trading signals, calculate return-based portfolio PnL, target volatility, compare exposures and chart results.
 
-## Main workflow
+## Features and support boundaries
 
-The following is the repository-specific logical workflow. Runtime execution details remain in the linked source and the validation record.
+Native = implemented here. Integration = supplied through a named host/API. Limited = material restriction. Not provided = evidenced scope exclusion. Unverified = support/absence not established. Not applicable = outside this artifact type.
+
+| Capability | Status | Implementation and limits | Source |
+|---|---|---|---|
+| Backtesting | Native | Vectorized historical signal PnL with delay, transaction and roll costs. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| Live execution | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Paper trading | Not applicable | Return-based PnL is the workflow. A broker paper account is outside this computation. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| Event driven | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Vectorized | Native | Aligns pandas frames and calculates returns/PnL across full histories. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| Order management | Not applicable | The inspected flow computes portfolio signals and PnL rather than exchange order state. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| Order types | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Multi venue | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Crypto | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Equities | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Futures | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Options | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Forex | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Strategy api | Native | TradingModel load_assets/load_parameters/construct_signal hooks drive baskets. | [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042)) |
+| Optimization | Limited | optimize_portfolio_weights constructs configured weights and volatility targeting. This method name is not evidence of a mathematical optimizer or parameter search. | [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) |
+| Machine learning | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Reinforcement learning | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Portfolio | Native | Sum/mean/weighted basket construction and portfolio leverage. | [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) |
+| Risk management | Native | Signal/portfolio volatility targeting and exposure clipping. Optional SL/TP modifies historical signals. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) / [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) / [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880)) |
+| Performance analytics | Native | Computes signal and portfolio PnL and exposures. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) / [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) |
+| Historical data | Integration | TradingModel accepts externally loaded market frames through load_assets hooks. | [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042)) |
+| Streaming data | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Persistence | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Data pipeline | Native | Signal lagging, aligned market calendars, forward filling and basket construction. | [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042)) / [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| Web ui | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Cli | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Monitoring | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Extension api | Native | Subclass TradingModel and inject a portfolio weighting object. | [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042)) / [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| Native acceleration | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+| Distributed execution | Unverified | The inspected source does not establish this capability. This is not a claim of absence. | Not applicable to this repository scope. |
+
+## System components
+
+| Component | Responsibility | Source |
+|---|---|---|
+| TradingModel | User-overridable model orchestration and basket comparison. | [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042)) |
+| Backtest | Vectorized signal-to-return accounting. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
+| PortfolioWeightConstruction | Portfolio weighting and volatility targeting. | [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) |
+| RiskEngine | Exposure adjustment and leverage policies. | [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880)) |
+
+## Architecture and component boundaries
+
+The component view summarizes inspected responsibility boundaries. Arrows identify the documented API/data dependencies; this is not a deployment-readiness claim.
 
 ```mermaid
 flowchart LR
-    S0["Create BacktestRequest"]
-    S1["Obtain market data and signals"]
-    S0 --> S1
-    S2["Calculate portfolio positions"]
-    S1 --> S2
-    S3["Apply costs and risk targeting"]
-    S2 --> S3
-    S4["Analyze backtest performance"]
-    S3 --> S4
-    S5["Compare strategies or chart economic studies"]
-    S4 --> S5
+  N0["TradingModel"]
+  N1["Backtest"]
+  N2["PortfolioWeightConstruction"]
+  N3["RiskEngine"]
+  N1 -->|"Call optimize_portfolio_weights."| N2
+  N1 -->|"Call calculate_position_clip_adjustment."| N3
 ```
 
-1. Create BacktestRequest.
-2. Obtain market data and signals.
-3. Calculate portfolio positions.
-4. Apply costs and risk targeting.
-5. Analyze backtest performance.
-6. Compare strategies or chart economic studies.
+- Call optimize_portfolio_weights.: [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121))
+- Call calculate_position_clip_adjustment.: [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121))
 
-## Components and ownership
+## Design decisions
 
-The entry point composes the source modules below; arrows indicate review/navigation boundaries rather than a claim that every module is called in every run.
+| Decision | Rationale | Tradeoff | Evidence |
+|---|---|---|---|
+| Represent strategy performance as aligned return matrices. | Vectorized signal accounting supports basket and risk comparisons. | It approximates trading costs without an order acknowledgement/fill lifecycle. | [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) |
 
-```mermaid
-flowchart TB
-    User["Application / research entry point"]
-    M0["backtest/backtestrequest.py"]
-    User --> M0
-    M1["backtest/backtestengine.py"]
-    User --> M1
-    M2["backtest/tradeanalysis.py"]
-    User --> M2
-    M3["backtest/backtestcomparison.py"]
-    User --> M3
-    M4["economics/techindicator.py"]
-    User --> M4
-    M5["economics/seasonality.py"]
-    User --> M5
-    M6["economics/eventstudy.py"]
-    User --> M6
-    M7["economics/quickchart.py"]
-    User --> M7
-```
-
-| Source | Declared classes / functions | Implementation role |
-|---|---|---|
-| [src/finmarketpy/backtest/backtestrequest.py](../src/finmarketpy/backtest/backtestrequest.py) | BacktestRequest | See the public declarations and implementation linked here. |
-| [src/finmarketpy/backtest/backtestengine.py](../src/finmarketpy/backtest/backtestengine.py) | Backtest, TradingModel, PortfolioWeightConstruction, RiskEngine | See the public declarations and implementation linked here. |
-| [src/finmarketpy/backtest/tradeanalysis.py](../src/finmarketpy/backtest/tradeanalysis.py) | TradeAnalysis | See the public declarations and implementation linked here. |
-| [src/finmarketpy/backtest/backtestcomparison.py](../src/finmarketpy/backtest/backtestcomparison.py) | BacktestComparison | See the public declarations and implementation linked here. |
-| [src/finmarketpy/economics/techindicator.py](../src/finmarketpy/economics/techindicator.py) | TechIndicator, TechParams | See the public declarations and implementation linked here. |
-| [src/finmarketpy/economics/seasonality.py](../src/finmarketpy/economics/seasonality.py) | Seasonality | See the public declarations and implementation linked here. |
-| [src/finmarketpy/economics/eventstudy.py](../src/finmarketpy/economics/eventstudy.py) | EventStudy, EventsFactory, HistEconDataFactory | See the public declarations and implementation linked here. |
-| [src/finmarketpy/economics/quickchart.py](../src/finmarketpy/economics/quickchart.py) | QuickChart | See the public declarations and implementation linked here. |
-| [src/finmarketpy/curve/fxspotcurve.py](../src/finmarketpy/curve/fxspotcurve.py) | FXSpotCurve; _spot_index_numba, _spot_index | See the public declarations and implementation linked here. |
-| [src/finmarketpy/curve/fxforwardscurve.py](../src/finmarketpy/curve/fxforwardscurve.py) | FXForwardsCurve | See the public declarations and implementation linked here. |
-| [src/finmarketpy/curve/fxoptionscurve.py](../src/finmarketpy/curve/fxoptionscurve.py) | FXOptionsCurve | See the public declarations and implementation linked here. |
-| [src/finmarketpy/util/marketconstants.py](../src/finmarketpy/util/marketconstants.py) | MarketConstants | See the public declarations and implementation linked here. |
-| [src/finmarketpy/__init__.py](../src/finmarketpy/__init__.py) | Package data / configuration | See the public declarations and implementation linked here. |
-| [src/finmarketpy/backtest/__init__.py](../src/finmarketpy/backtest/__init__.py) | Package data / configuration | See the public declarations and implementation linked here. |
-
-## Class design
-
-Methods and inheritance edges are taken from the selected declarations in the actual source. A missing edge means composition or an external base is not asserted here.
+## Class and interface relationships
 
 ```mermaid
 classDiagram
-    class BacktestRequest {
-        +__init__()
-        +plot_start()
-        +plot_start()
-        +plot_finish()
-        +plot_finish()
-    }
-    class Backtest {
-        +__init__()
-        +calculate_diagnostic_trading_PnL()
-        +calculate_trading_PnL()
-        +calculate_exposures()
-        +backtest_output()
-    }
-    class TradingModel {
-        +__init__()
-        +load_parameters()
-        +load_assets()
-        +construct_signal()
-        +save_model()
-    }
-    class TradeAnalysis {
-        +__init__()
-        +run_strategy_returns_stats()
-        +run_excel_trade_report()
-        +save_positions_trades()
-        +run_tc_shock()
-    }
-    class TechIndicator {
-        +__init__()
-        +create_tech_ind()
-        +create_custom_tech_ind()
-        +get_techind()
-        +get_signal()
-    }
+  class N0["TradingModel"] {
+    <<class>>
+    +construct_strategy()
+  }
+  class N1["Backtest"] {
+    <<class>>
+    +calculate_trading_PnL()
+  }
+  class N2["PortfolioWeightConstruction"] {
+    <<class>>
+    +optimize_portfolio_weights()
+  }
+  class N3["RiskEngine"] {
+    <<class>>
+    +calculate_position_clip_adjustment()
+  }
+  N1 ..> N2 : Calls optimize_portfolio_weights on injected or default weighting object.
+  N1 ..> N3 : Calls calculate_position_clip_adjustment.
 ```
 
-## End-to-end interaction
+Each node is a reviewed source symbol. Function/module nodes are explicitly labeled; they do not imply Python classes. Only reviewed relationships are drawn.
 
-This sequence presents the responsibilities of the main workflow, including the state/result boundary. The linked classes and functions provide the exact method-level contract.
+- **TradingModel** (class): [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042))
+- **Backtest** (class): [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121))
+- **PortfolioWeightConstruction** (class): [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522))
+- **RiskEngine** (class): [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880))
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Entry as Create BacktestRequest
-    participant Process as Calculate portfolio positions
-    participant State as Analyze backtest performance
-    participant Output as Compare strategies or chart economic studies
-    User->>Entry: Supply configuration and inputs
-    Entry->>Process: Obtain market data and signals
-    Process->>State: Apply costs and risk targeting
-    State-->>Process: Updated execution / calculation state
-    Process->>Output: Produce results
-    Output-->>User: Report outcomes
-```
+## Workflow
 
-## Source dependency direction
+### Representative source-backed flow
 
-These edges are actual explicit imports between the selected source modules. Dynamic imports, re-exports and third-party internals are omitted.
-
-```mermaid
-flowchart LR
-    I0["backtestrequest"]
-    I1["backtestengine"]
-    I2["tradeanalysis"]
-    I3["backtestcomparison"]
-    I4["techindicator"]
-    I5["seasonality"]
-    I6["eventstudy"]
-    I7["quickchart"]
-    I8["fxspotcurve"]
-    I9["fxforwardscurve"]
-    I1 --> I0
-    I2 --> I5
-    I3 --> I1
-```
-
-## Design details and extension points
-
-### `BacktestRequest`
-
-Source: [src/finmarketpy/backtest/backtestrequest.py](../src/finmarketpy/backtest/backtestrequest.py).
-
-Contains parameters necessary to define a backtest, including start date, finish date, transaction cost, etc
-
-- `plot_start`: See implementation for the complete contract.
-- `plot_start`: See implementation for the complete contract.
-- `plot_finish`: See implementation for the complete contract.
-- `plot_finish`: See implementation for the complete contract.
-- `calc_stats`: See implementation for the complete contract.
-
-### `Backtest`
-
-Source: [src/finmarketpy/backtest/backtestengine.py](../src/finmarketpy/backtest/backtestengine.py).
-
-Conducts backtest for strategies trading assets. Assumes we have an
-input of total returns. Reports historical return statistics
-and returns time series.
-
-- `calculate_diagnostic_trading_PnL`: Calculates P&L table which can be used for debugging purposes.
-- `calculate_trading_PnL`: Calculates P&L of a trading strategy and statistics to be retrieved later
-- `calculate_exposures`: Calculates time series for the total longs, short, net and absolute exposure on an aggregated portfolio basis.
-- `backtest_output`: See implementation for the complete contract.
-- `pnl`: Gets P&L returns of all the individual sub_components of the model (before any portfolio level leverage is applied)
-
-### `TradingModel`
-
-Source: [src/finmarketpy/backtest/backtestengine.py](../src/finmarketpy/backtest/backtestengine.py).
-
-Abstract class which wraps around Backtest, providing convenient functions for analaysis. Implement your own
-subclasses of this for your own strategy. See tradingmodelfxtrend_example.py for a simple implementation of a
-FX trend following strategy.
-
-- `load_parameters`: Fills parameters for the backtest, such as start-end dates, transaction costs etc. To be implemented by subclass. Can overwrite it with our own BacktestRequest.
-- `load_assets`: Loads time series for the assets to be traded and also for data for generating signals. Can overwrite it with our own BacktestRequest.
-- `construct_signal`: Constructs signal from pre-loaded time series
-- `save_model`: Save the model instance as as pickle.
-- `load_model`: Load the pickle of the saved model. :param path: path to pickle. :return: TradingModel instance.
-
-### `TradeAnalysis`
-
-Source: [src/finmarketpy/backtest/tradeanalysis.py](../src/finmarketpy/backtest/tradeanalysis.py).
-
-Applies some basic trade analysis for a trading strategy (as defined by TradingModel). Use PyFolio to create some
-basic trading statistics. Also allows you test multiple parameters for a specific strategy (like TC).
-
-- `run_strategy_returns_stats`: Plots useful statistics for the trading strategy using various backends
-- `run_excel_trade_report`: run_excel_trade_report - Creates an Excel spreadsheet with model returns and latest trades
-- `save_positions_trades`: See implementation for the complete contract.
-- `run_tc_shock`: See implementation for the complete contract.
-- `run_arbitrary_sensitivity`: See implementation for the complete contract.
-
-### `TechIndicator`
-
-Source: [src/finmarketpy/economics/techindicator.py](../src/finmarketpy/economics/techindicator.py).
-
-Calculates various technical indicators and associated trading signals.
-
-- `create_tech_ind`: See implementation for the complete contract.
-- `create_custom_tech_ind`: See implementation for the complete contract.
-- `get_techind`: See implementation for the complete contract.
-- `get_signal`: See implementation for the complete contract.
-
-## Repository layout and resources
-
-Installable packages live under `src/`. `pyproject.toml` defines package metadata, build requirements, optional integrations and development dependencies; `uv.lock` records resolved versions, and `.python-version` selects the local interpreter. This layout keeps an accidental checkout import from substituting for the installed wheel. Package resources remain beside their owning modules and are included by the build backend. Existing upstream examples, fixtures, scripts and documentation retain their separate roles.
-
-## Maintenance compatibility and evidence
-
-- The complete supplied tests pass with current scientific dependencies.
-- findatapy 0.1.42 and chartpy 0.1.16 still use deprecated UTC constructors upstream. Verified licensed local sources preserve naive-UTC results and have documented hashes, refresh/retirement instructions and original licenses.
-- Chartpy imports Plotly private OHLC machinery removed in Plotly6; Plotly>=5.24.1,<6 is the proven compatible range.
-- The source archive includes vendor sources; uv sources select them. Ordinary wheel installers do not interpret tool.uv.sources, so use the documented uv checkout/sdist workflow to reproduce these patches.
-
-## Development and verification workflow
+The steps describe the inspected implementation. User configuration and data inputs are external prerequisites.
 
 ```mermaid
 flowchart TD
-    Checkout["feature/ayu_develop"] --> Lock["uv lock --upgrade"]
-    Lock --> Sync["uv sync --frozen --all-extras --all-groups"]
-    Sync --> Compile["python -m compileall src"]
-    Sync --> Test["Existing complete test suite"]
-    Compile --> Build["uv build wheel and sdist"]
-    Test --> Evidence["Record exact exits and blockers"]
-    Build --> Evidence
-    Evidence --> Review["Review documentation and commit"]
+  W0["Load asset and signal inputs and organize baskets."]
+  W1["Delay and align signals with price returns."]
+  W0 --> W1
+  W2["Combine signal PnL using weights and volatility targeting."]
+  W1 --> W2
+  W3["Calculate exposure clipping adjustment."]
+  W2 --> W3
 ```
 
-See [development commands](development.md) and [validation evidence](validation.md) for interpreter selection, dependency exceptions, full-suite results and remaining blockers. No additional test cases were introduced by this maintenance.
+1. Load asset and signal inputs and organize baskets.. [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042))
+2. Delay and align signals with price returns.. [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121))
+3. Combine signal PnL using weights and volatility targeting.. [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) / [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522))
+4. Calculate exposure clipping adjustment.. [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) / [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880))
+
+## Sequence
+
+Representative calls and data dependencies
+
+Messages represent inspected calls or explicitly labelled data dependencies. A data dependency is not an asserted direct runtime call.
+
+```mermaid
+sequenceDiagram
+  participant N0 as TradingModel
+  participant N1 as Backtest
+  participant N2 as PortfolioWeightConstruction
+  participant N3 as RiskEngine
+  N1->>N2: Call optimize_portfolio_weights.
+  N1->>N3: Call calculate_position_clip_adjustment.
+```
+
+- Call optimize_portfolio_weights.: [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121))
+- Call calculate_position_clip_adjustment.: [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121))
+
+## Strengths and limits
+
+### Strengths
+
+- Risk targeting and portfolio construction are visible in the signal/PnL pipeline. [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) / [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) / [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880))
+
+### Limitations
+
+- RiskEngine absolute exposure branch references portfolio_abs_exposure established in the net exposure branch. Static review does not establish that max_abs_exposure alone is safe. [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880))
+
+## Validation scope
+
+The linked validation and command records preserve actual historical runs and user-authorized exclusions. This source/document review does not rerun application tests, establish live trading readiness or rank benchmark performance. Current data, credential and runtime prerequisites remain material.
+
+[Repository validation](validation.md) / [Executed checks](maintenance/index.md)
+
+## Source map
+
+| Reviewed symbol/path | Inspected responsibility | Actual file SHA256 |
+|---|---|---|
+| [TradingModel.construct_strategy](../src/finmarketpy/backtest/backtestengine.py) ([L1042](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L1042)) | Loads market assets through subclass hooks, organizes baskets, builds individual strategies and optionally runs basket work in a worker pool. | `51ba181a64e1297a11bf4b11323009c992e6b279f03aac9fff511dc83807893e` |
+| [Backtest.calculate_trading_PnL](../src/finmarketpy/backtest/backtestengine.py) ([L121](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L121)) | Shifts signals by configured delay, aligns prices, computes returns, applies optional stops and calls PortfolioWeightConstruction and RiskEngine. | `51ba181a64e1297a11bf4b11323009c992e6b279f03aac9fff511dc83807893e` |
+| [PortfolioWeightConstruction.optimize_portfolio_weights](../src/finmarketpy/backtest/backtestengine.py) ([L2522](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2522)) | Computes signal PnL with transaction/roll costs, combines sum/mean/weighted baskets and applies configured volatility targeting. | `51ba181a64e1297a11bf4b11323009c992e6b279f03aac9fff511dc83807893e` |
+| [RiskEngine.calculate_position_clip_adjustment](../src/finmarketpy/backtest/backtestengine.py) ([L2880](https://github.com/alexcwyu/finmarketpy/blob/4fb1203b6f08edcac60c179b87114d90b6873567/src/finmarketpy/backtest/backtestengine.py#L2880)) | Calculates exposure-based clipping factors from configured net/absolute exposure limits and rebalance frequency. | `51ba181a64e1297a11bf4b11323009c992e6b279f03aac9fff511dc83807893e` |
+
+## Documentation provenance
+
+Review date: 2026-10-13. Full committed source HEAD: `4fb1203b6f08edcac60c179b87114d90b6873567`. Template version: 2. 1 source files were independently hashed for this guide.
+
+[Evidence catalog](../../docs/systems-2026-10-13/catalog.json) / [Standard template](../../docs/guidelines/APP_TEMPLATE.md)
+
+- Snapshot provenance: inventory.json full HEAD 4fb1203b6f08edcac60c179b87114d90b6873567, branch feature/ayu_develop. Source was inspected in the existing checkout and no repository files were changed.
+- Inspected implementation bodies and existing architecture documentation. This is a representative static source audit, not a runtime or live-service validation. Credential exclusions in current validation are policy, not evidence that a live connection succeeds.
+- Inspected source files: src/finmarketpy/backtest/backtestengine.py
